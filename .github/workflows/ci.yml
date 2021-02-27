@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  - push
+  - pull_request
+  - workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Download GCC
+        run: git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.8 ~/gcc -b lollipop-release
+
+      - name: Do it
+        run: |
+              export ARCH=arm CROSS_COMPILE=~/gcc/bin/arm-linux-androideabi-
+              cd $GITHUB_WORKSPACE
+              mkdir out
+              make O=out clean mrproper
+              make O=out v2800_defconfig
+              make O=out -j$(nproc --all)
+              
+      - uses: actions/upload-artifact@v2
+        with:
+             name: zImage-dtb
+             path: out/arch/arm/boot/zImage-dtb
